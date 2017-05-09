@@ -14,12 +14,16 @@ import java.io.IOException;
  * Adaptor for the {@link IKey} interface for the GSON library.
  */
 final class GsonKeyAdapter extends TypeAdapter<IKey> {
+    private final KeyCreator rsaKeyCreator;
+    private final KeyCreator simpleKeyCreator;
 
     /**
      * Constructor for the {@code GsonKeyAdapter} class.
      */
     GsonKeyAdapter() {
         super();
+        this.rsaKeyCreator = RSAKey.getCreator();
+        this.simpleKeyCreator = SimpleKey.getCreator();
     }
 
     /**
@@ -54,10 +58,10 @@ final class GsonKeyAdapter extends TypeAdapter<IKey> {
         final IKey key;
         switch (type) {
             case ConstantKeywords.RSA_KEY:
-                key = RSAKey.fromJSON(reader);
+                key = this.rsaKeyCreator.fromJSON(reader);
                 break;
             case "simple":
-                key = SimpleKey.fromJSON(reader);
+                key = this.simpleKeyCreator.fromJSON(reader);
                 break;
             default:
                 throw new IOException("Could not read key");

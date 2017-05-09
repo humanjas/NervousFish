@@ -2,6 +2,7 @@ package com.nervousfish.nervousfish.data_objects;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.nervousfish.nervousfish.modules.database.KeyCreator;
 
 import java.io.IOException;
 
@@ -23,17 +24,20 @@ public final class SimpleKey implements IKey {
         this.key = key;
     }
 
-    /**
-     * Create a new SimpleKey given a {@link JsonReader}.
-     *
-     * @param reader The {@link JsonReader} to read with.
-     * @return An {@link IKey} representing the JSON key.
-     * @throws IOException When the {@link JsonReader} throws an {@link IOException}.
-     */
-    static public IKey fromJSON(final JsonReader reader) throws IOException {
-        reader.nextName();
-        final String key = reader.nextString();
-        return new SimpleKey(key);
+    public static KeyCreator getCreator() {
+        return new KeyCreator(new KeyCreator.KeyCreatorCallable() {
+            /**
+             *
+             * @return A new instance of {@link RSAKey}
+             * @throws IOException When the {@link JsonReader} throws an {@link IOException}.
+             */
+            @Override
+            public IKey call(final JsonReader reader) throws IOException {
+                reader.nextName();
+                final String key = reader.nextString();
+                return new SimpleKey(key);
+            }
+        });
     }
 
     /**
