@@ -2,8 +2,10 @@ package com.nervousfish.nervousfish.activities;
 
 import com.nervousfish.nervousfish.data_objects.Contact;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -15,8 +17,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
 
 import com.nervousfish.nervousfish.ConstantKeywords;
 import com.nervousfish.nervousfish.R;
@@ -33,8 +38,10 @@ import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,7 +53,6 @@ public final class MainActivity extends AppCompatActivity {
 
     private IServiceLocator serviceLocator;
     private List<Contact> contacts;
-    private Set<String> keyTypeSet;
 
     private Comparator<Contact> nameSorter = new Comparator<Contact>() {
         @Override
@@ -71,7 +77,6 @@ public final class MainActivity extends AppCompatActivity {
         try {
             fillDatabaseWithDemoData();
             this.contacts = serviceLocator.getDatabase().getAllContacts();
-            this.keyTypeSet = getKeyTypes();
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -96,22 +101,7 @@ public final class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-
-        final ListView lv = (ListView) findViewById(R.id.listView);
-        final ContactListAdapter contactListAdapter = new ContactListAdapter(this, this.contacts);
-        contactListAdapter.sort(nameSorter);
-        lv.setAdapter(contactListAdapter);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, final int index, final long id) {
-                openContact(index);
-            }
-
-        });
+        sortOnKeyType();
 
         LOGGER.info("MainActivity created");
     }
@@ -149,6 +139,7 @@ public final class MainActivity extends AppCompatActivity {
                 database.deleteContact(d);
                 database.deleteContact(e);
             }
+
             database.addContact(a);
             database.addContact(b);
             database.addContact(c);
@@ -159,19 +150,60 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Set<String> getKeyTypes() {
-      Set<String> typeSet = new HashSet<>();
-      for(Contact c: contacts) {
-          for(IKey k: c.getKeys()) {
-              typeSet.add(k.getType());
-          }
-      }
-      return typeSet;
+    /**
+     * Gets all types of keys in the database
+     * @return a List with the types of keys.
+     */
+    private List<String> getKeyTypes() {
+        Set<String> typeSet = new HashSet<>();
+        for (Contact c : contacts) {
+            for (IKey k : c.getKeys()) {
+                typeSet.add(k.getType());
+            }
+        }
+        return new ArrayList<>(typeSet);
     }
 
+    /**
+     * Sorts contacts by name
+     */
+    private void sortOnName() {
+        final ListView lv = (ListView) findViewById(R.id.listView);
+        final ContactListAdapter contactListAdapter = new ContactListAdapter(this, this.contacts);
+        contactListAdapter.sort(nameSorter);
+        lv.setAdapter(contactListAdapter);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int index, final long id) {
+                openContact(index);
+            }
+
+        });
+    }
+    /**
+     * Sorts contacts by key type
+     */
     private void sortOnKeyType() {
+        final ExpandableListView ev = (ExpandableListView) findViewById(R.id.expandableListView);
+        final ExpandableListAdapter expandableListAdapter = new ExpandableListAdapter(this, getKeyTypes(), contacts);
+        ev.setAdapter(expandableListAdapter);
+        ev.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int index, final long id) {
+                openContact(index);
+            }
 
+        });
+        final ViewFlipper flipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        flipper.showNext();
     }
 
 }
@@ -218,3 +250,110 @@ final class ContactListAdapter extends ArrayAdapter<Contact> {
     }
 
 }
+
+
+final class ExpandableListAdapter extends BaseExpandableListAdapter {
+
+    private Map<String, List<Contact>> groupedContacts;
+    private List<String> types;
+    private Activity context;
+
+    public ExpandableListAdapter(Activity context, List<String> types, List<Contact> contacts) {
+        this.context = context;
+        this.types = types;
+        groupedContacts = new HashMap<>();
+        for(String type: types) {
+            groupedContacts.put(type, new ArrayList<Contact>());
+        }
+        for(Contact contact: contacts) {
+            for(String type: types) {
+                if(!groupedContacts.get(type).contains(contact)) {
+                    groupedContacts.get(type).add(contact);
+                }
+            }
+        }
+
+
+    }
+
+    @Override
+    public Object getChild(int groupPosition, int childPosition) {
+
+        return groupedContacts.get(types.get(groupPosition)).get(childPosition);
+    }
+
+    @Override
+    public long getChildId(int groupPosition, int childPosition) {
+        return childPosition;
+    }
+
+    @Override
+    public View getChildView(final int groupPosition, final int childPosition,
+                             boolean isLastChild, View convertView, ViewGroup parent) {
+        final Contact contact = (Contact) getChild(groupPosition, childPosition);
+        View v = convertView;
+
+        if (v == null) {
+            final LayoutInflater vi = context.getLayoutInflater();
+            v = vi.inflate(R.layout.contact_list_entry, null);
+        }
+
+
+        if (contact != null) {
+            final TextView name = (TextView) v.findViewById(R.id.name);
+
+            if (name != null) {
+                name.setText(contact.getName());
+            }
+        }
+
+        return v;
+    }
+
+    @Override
+    public int getChildrenCount(int groupPosition) {
+        return groupedContacts.get(types.get(groupPosition)).size();
+    }
+
+    @Override
+    public Object getGroup(int groupPosition) {
+        return types.get(groupPosition);
+    }
+
+    @Override
+    public int getGroupCount() {
+        return types.size();
+    }
+
+    @Override
+    public long getGroupId(int groupPosition) {
+        return groupPosition;
+    }
+
+    @Override
+    public View getGroupView(int groupPosition, boolean isExpanded,
+                             View convertView, ViewGroup parent) {
+        String type = (String) getGroup(groupPosition);
+        if (convertView == null) {
+            final LayoutInflater vi = context.getLayoutInflater();
+            convertView = vi.inflate(R.layout.key_type, null);
+        }
+
+        TextView item = (TextView) convertView.findViewById(R.id.type);
+        item.setTypeface(null, Typeface.BOLD);
+        item.setText(type);
+        return convertView;
+    }
+
+    @Override
+    public boolean hasStableIds() {
+        return true;
+    }
+
+    @Override
+    public boolean isChildSelectable(int groupPosition, int childPosition) {
+        return true;
+    }
+}
+
+

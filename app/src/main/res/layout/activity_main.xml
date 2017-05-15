@@ -30,6 +30,7 @@
                 android:textStyle="bold" />
         </android.support.v7.widget.Toolbar>
         <ViewFlipper
+            android:id="@+id/viewFlipper"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <include layout="@layout/content_main" />
