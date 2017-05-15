@@ -53,6 +53,11 @@ public final class MainActivity extends AppCompatActivity {
 
     private IServiceLocator serviceLocator;
     private List<Contact> contacts;
+    private static final int NUMBER_OF_SORTING_MODES = 2;
+    private static final int SORT_BY_NAME = 0;
+    private static final int SORT_BY_KEY_TYPE = 1;
+    private Integer currentSorting = 0;
+
 
     private Comparator<Contact> nameSorter = new Comparator<Contact>() {
         @Override
@@ -101,7 +106,21 @@ public final class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-        sortOnKeyType();
+
+        sortOnName();
+
+        final FloatingActionButton fab2 = (FloatingActionButton) findViewById(R.id.fab2);
+        fab2.setOnClickListener(new View.OnClickListener() {
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void onClick(final View view) {
+                switchSorting();
+            }
+
+        });
 
         LOGGER.info("MainActivity created");
     }
@@ -152,6 +171,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /**
      * Gets all types of keys in the database
+     *
      * @return a List with the types of keys.
      */
     private List<String> getKeyTypes() {
@@ -162,6 +182,27 @@ public final class MainActivity extends AppCompatActivity {
             }
         }
         return new ArrayList<>(typeSet);
+    }
+
+    /**
+     * Switches the sorting mode.
+     */
+    private void switchSorting() {
+        currentSorting++;
+        if (currentSorting >= NUMBER_OF_SORTING_MODES) {
+            currentSorting = 0;
+        }
+        final ViewFlipper flipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        flipper.showNext();
+        switch (currentSorting) {
+            case SORT_BY_NAME:
+                sortOnName();
+                break;
+            case SORT_BY_KEY_TYPE:
+                sortOnKeyType();
+                break;
+
+        }
     }
 
     /**
@@ -183,7 +224,9 @@ public final class MainActivity extends AppCompatActivity {
             }
 
         });
+
     }
+
     /**
      * Sorts contacts by key type
      */
@@ -202,8 +245,7 @@ public final class MainActivity extends AppCompatActivity {
             }
 
         });
-        final ViewFlipper flipper = (ViewFlipper) findViewById(R.id.viewFlipper);
-        flipper.showNext();
+
     }
 
 }
@@ -262,12 +304,12 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
         this.context = context;
         this.types = types;
         groupedContacts = new HashMap<>();
-        for(String type: types) {
+        for (String type : types) {
             groupedContacts.put(type, new ArrayList<Contact>());
         }
-        for(Contact contact: contacts) {
-            for(String type: types) {
-                if(!groupedContacts.get(type).contains(contact)) {
+        for (Contact contact : contacts) {
+            for (String type : types) {
+                if (!groupedContacts.get(type).contains(contact)) {
                     groupedContacts.get(type).add(contact);
                 }
             }
@@ -341,7 +383,7 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
 
         TextView item = (TextView) convertView.findViewById(R.id.type);
         item.setTypeface(null, Typeface.BOLD);
-        item.setText(type);
+        item.setText("Keytype: "+type);
         return convertView;
     }
 
