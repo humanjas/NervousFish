@@ -29,10 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The main activity class that shows a list of all people with their public keys
@@ -43,6 +46,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private IServiceLocator serviceLocator;
     private List<Contact> contacts;
+    private Set<String> keyTypeSet;
 
     private Comparator<Contact> nameSorter = new Comparator<Contact>() {
         @Override
@@ -67,6 +71,7 @@ public final class MainActivity extends AppCompatActivity {
         try {
             fillDatabaseWithDemoData();
             this.contacts = serviceLocator.getDatabase().getAllContacts();
+            this.keyTypeSet = getKeyTypes();
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -152,6 +157,16 @@ public final class MainActivity extends AppCompatActivity {
         } catch (final IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private Set<String> getKeyTypes() {
+      Set<String> typeSet = new HashSet<>();
+      for(Contact c: contacts) {
+          for(IKey k: c.getKeys()) {
+              typeSet.add(k.getType());
+          }
+      }
+      return typeSet;
     }
 
     private void sortOnKeyType() {
