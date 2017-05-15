@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -47,21 +46,22 @@ import java.util.Set;
 /**
  * The main activity class that shows a list of all people with their public keys
  */
+@SuppressWarnings({"PMD.ExcessiveImports","PMD.TooFewBranchesForASwitchStatement"})
 public final class MainActivity extends AppCompatActivity {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("MainActivity");
-
-    private IServiceLocator serviceLocator;
-    private List<Contact> contacts;
     private static final int NUMBER_OF_SORTING_MODES = 2;
     private static final int SORT_BY_NAME = 0;
     private static final int SORT_BY_KEY_TYPE = 1;
+
+    private IServiceLocator serviceLocator;
+    private List<Contact> contacts;
     private Integer currentSorting = 0;
 
 
-    private Comparator<Contact> nameSorter = new Comparator<Contact>() {
+    final private Comparator<Contact> nameSorter = new Comparator<Contact>() {
         @Override
-        public int compare(Contact o1, Contact o2) {
+        public int compare(final Contact o1,final Contact o2) {
             return o1.getName().compareTo(o2.getName());
         }
     };
@@ -175,9 +175,9 @@ public final class MainActivity extends AppCompatActivity {
      * @return a List with the types of keys.
      */
     private List<String> getKeyTypes() {
-        Set<String> typeSet = new HashSet<>();
-        for (Contact c : contacts) {
-            for (IKey k : c.getKeys()) {
+        final Set<String> typeSet = new HashSet<>();
+        for (final Contact c : contacts) {
+            for (final IKey k : c.getKeys()) {
                 typeSet.add(k.getType());
             }
         }
@@ -201,7 +201,8 @@ public final class MainActivity extends AppCompatActivity {
             case SORT_BY_KEY_TYPE:
                 sortOnKeyType();
                 break;
-
+            default:
+                break;
         }
     }
 
@@ -293,22 +294,23 @@ final class ContactListAdapter extends ArrayAdapter<Contact> {
 
 }
 
-
+@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
 final class ExpandableListAdapter extends BaseExpandableListAdapter {
 
-    private Map<String, List<Contact>> groupedContacts;
-    private List<String> types;
-    private Activity context;
+    final private Map<String, List<Contact>> groupedContacts;
+    final private List<String> types;
+    final private Activity context;
 
-    public ExpandableListAdapter(Activity context, List<String> types, List<Contact> contacts) {
+    public ExpandableListAdapter(final Activity context, final List<String> types, final List<Contact> contacts) {
+        super();
         this.context = context;
         this.types = types;
         groupedContacts = new HashMap<>();
-        for (String type : types) {
+        for (final String type : types) {
             groupedContacts.put(type, new ArrayList<Contact>());
         }
-        for (Contact contact : contacts) {
-            for (String type : types) {
+        for (final Contact contact : contacts) {
+            for (final String type : types) {
                 if (!groupedContacts.get(type).contains(contact)) {
                     groupedContacts.get(type).add(contact);
                 }
@@ -319,19 +321,19 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public Object getChild(int groupPosition, int childPosition) {
+    public Object getChild(final int groupPosition, final int childPosition) {
 
         return groupedContacts.get(types.get(groupPosition)).get(childPosition);
     }
 
     @Override
-    public long getChildId(int groupPosition, int childPosition) {
+    public long getChildId(final int groupPosition, final int childPosition) {
         return childPosition;
     }
 
     @Override
     public View getChildView(final int groupPosition, final int childPosition,
-                             boolean isLastChild, View convertView, ViewGroup parent) {
+                             final boolean isLastChild, final View convertView, final ViewGroup parent) {
         final Contact contact = (Contact) getChild(groupPosition, childPosition);
         View v = convertView;
 
@@ -353,12 +355,12 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public int getChildrenCount(int groupPosition) {
+    public int getChildrenCount(final int groupPosition) {
         return groupedContacts.get(types.get(groupPosition)).size();
     }
 
     @Override
-    public Object getGroup(int groupPosition) {
+    public Object getGroup(final int groupPosition) {
         return types.get(groupPosition);
     }
 
@@ -368,23 +370,24 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public long getGroupId(int groupPosition) {
+    public long getGroupId(final int groupPosition) {
         return groupPosition;
     }
 
     @Override
-    public View getGroupView(int groupPosition, boolean isExpanded,
-                             View convertView, ViewGroup parent) {
-        String type = (String) getGroup(groupPosition);
+    public View getGroupView(final int groupPosition, final boolean isExpanded,
+                             final View convertView, final ViewGroup parent) {
+        final String type = (String) getGroup(groupPosition);
+        View view = convertView;
         if (convertView == null) {
             final LayoutInflater vi = context.getLayoutInflater();
-            convertView = vi.inflate(R.layout.key_type, null);
+            view = vi.inflate(R.layout.key_type, null);
         }
 
-        TextView item = (TextView) convertView.findViewById(R.id.type);
+        final TextView item = (TextView) view.findViewById(R.id.type);
         item.setTypeface(null, Typeface.BOLD);
         item.setText("Keytype: "+type);
-        return convertView;
+        return view;
     }
 
     @Override
@@ -393,7 +396,7 @@ final class ExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public boolean isChildSelectable(int groupPosition, int childPosition) {
+    public boolean isChildSelectable(final int groupPosition, final int childPosition) {
         return true;
     }
 }
