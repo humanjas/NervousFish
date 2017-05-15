@@ -50,6 +50,8 @@ public final class MainActivity extends AppCompatActivity {
             return o1.getName().compareTo(o2.getName());
         }
     };
+
+
     /**
      * Creates the new activity, should only be called by Android
      *
@@ -150,6 +152,11 @@ public final class MainActivity extends AppCompatActivity {
         } catch (final IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void sortOnKeyType() {
+
+
     }
 
 }
