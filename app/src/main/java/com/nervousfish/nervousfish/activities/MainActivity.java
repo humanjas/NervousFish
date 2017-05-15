@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -43,6 +44,12 @@ public final class MainActivity extends AppCompatActivity {
     private IServiceLocator serviceLocator;
     private List<Contact> contacts;
 
+    private Comparator<Contact> nameSorter = new Comparator<Contact>() {
+        @Override
+        public int compare(Contact o1, Contact o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
     /**
      * Creates the new activity, should only be called by Android
      *
@@ -84,7 +91,9 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         final ListView lv = (ListView) findViewById(R.id.listView);
-        lv.setAdapter(new ContactListAdapter(this, this.contacts));
+        final ContactListAdapter contactListAdapter = new ContactListAdapter(this, this.contacts);
+        contactListAdapter.sort(nameSorter);
+        lv.setAdapter(contactListAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             /**
